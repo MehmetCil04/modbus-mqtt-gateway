@@ -5,7 +5,7 @@ InfluxDB + Grafana üzerinde canlı görselleştiren endüstriyel IoT gateway. Y
 tarayıcıdan yapılır, firmware OTA ile güncellenir.
 
 ![Grafana dashboard](docs/grafana-dashboard.png)
-*Canlı dashboard: gerilim, akım, güç ve sıcaklık zaman serileri + anlık ölçüm kartları.*
+*Canlı dashboard: aynı anda iki bağımsız cihazdan (Python tam stack + Wokwi sanal ESP32) gerilim, akım, güç ve sıcaklık zaman serileri. "Aktif Cihazlar: 2" — Telegraf, hem yerel Mosquitto broker'ı hem de public `test.mosquitto.org`'u dinler.*
 
 ```
                                                               ┌─────────────┐
@@ -31,7 +31,7 @@ Donanım hâlâ yolda mı? Sorun değil — proje **iki farklı donanımsız tes
 <p align="center">
   <img src="docs/wokwi-simulation.png" alt="Wokwi simulation" width="500">
   <br>
-  <em>Aynı firmware Wokwi'de sanal ESP32 üzerinde çalışıyor. WiFi + MQTT bağlantısı OK; gerçek bir Modbus slave olmadığı için ERR sayacı artıyor (beklenen davranış).</em>
+  <em>Aynı firmware Wokwi'de sanal ESP32 üzerinde çalışıyor. WiFi + MQTT bağlı, UART loopback üzerinden Modbus okumaları başarılı (OK: 28, ERR: 0). TX/RX LED'leri canlı veri akışını gösterir.</em>
 </p>
 
 ## Hızlı Başlangıç (Donanımsız)
