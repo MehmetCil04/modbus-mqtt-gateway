@@ -4,6 +4,9 @@ ESP32 tabanlı, RS485 üzerinden Modbus RTU sensör/sayaç okuyup MQTT ile bulut
 InfluxDB + Grafana üzerinde canlı görselleştiren endüstriyel IoT gateway. Yapılandırma
 tarayıcıdan yapılır, firmware OTA ile güncellenir.
 
+![Grafana dashboard](docs/grafana-dashboard.png)
+*Canlı dashboard: gerilim, akım, güç ve sıcaklık zaman serileri + anlık ölçüm kartları.*
+
 ```
 [Modbus Slave] --RS485--> [ESP32 Gateway] --WiFi/MQTT--> [Mosquitto] --> [Telegraf] --> [InfluxDB] --> [Grafana]
                               |       \
@@ -11,6 +14,12 @@ tarayıcıdan yapılır, firmware OTA ile güncellenir.
 ```
 
 Donanım hâlâ yolda mı? Sorun değil — proje **iki farklı donanımsız test modu** ile birlikte gelir.
+
+<p align="center">
+  <img src="docs/wokwi-simulation.png" alt="Wokwi simulation" width="500">
+  <br>
+  <em>Aynı firmware Wokwi'de sanal ESP32 üzerinde çalışıyor. WiFi + MQTT bağlantısı OK; gerçek bir Modbus slave olmadığı için ERR sayacı artıyor (beklenen davranış).</em>
+</p>
 
 ## Hızlı Başlangıç (Donanımsız)
 
