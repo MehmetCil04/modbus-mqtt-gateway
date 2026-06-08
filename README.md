@@ -57,48 +57,55 @@ Ardından:
 | **Wokwi** | Yok | VS Code + Wokwi ext. | Gerçek ESP32 firmware'i sanal donanımda. WiFi + OLED'i tarayıcıda görürsünüz. |
 | **Gerçek donanım** | ESP32 + MAX485 + Modbus sensör | USB | Üretim modu. PCB veya breadboard ile gerçek saha kullanımı. |
 
-## Wokwi Simülasyonu (Tarayıcıda Sanal ESP32 — Multi-Board)
+## Wokwi Simülasyonu (Tarayıcıda Sanal ESP32 — UART Loopback)
 
-Wokwi yapılandırması **iki ESP32**'yi yan yana çalıştırır: master gateway'imiz ve
-ayrı bir slave firmware'i (`slave-firmware/`) ile çalışan sahte PZEM-004T enerji
-sayacı. UART hatları çapraz bağlanır — gerçek RS485 kablolaması simülasyonda
-şeffaf hale gelir (MAX485 IC'leri atlanır çünkü yazılım katmanı değişmez).
+Wokwi yapılandırması **tek ESP32** üzerinde hem gateway master'ı hem de sanal bir
+PZEM-like Modbus slave'i çalıştırır. Slave UART1'de (GPIO5/18), master UART2'de
+(GPIO16/17). İki UART, kart üzerinde çapraz olarak kabloyla birbirine bağlanır;
+gerçek Modbus RTU protokolü iki UART arasında konuşur:
 
 ```
-┌──────────────────┐    GPIO17 (TX)    ┌──────────────────┐
-│  Gateway ESP32   │ ───────────────▶ │   Slave ESP32    │
-│  - Modbus master │    GPIO16 (RX)    │   - Modbus slave │
-│  - MQTT publish  │ ◀─────────────── │   - PZEM register │
-│  - OLED + WebUI  │       GND         │     map (V/I/P/T) │
-└──────────────────┘ ◀──────────────▶ └──────────────────┘
+                  ┌──────────────────────────────────────┐
+                  │      ESP32 (Wokwi sanal donanım)     │
+                  │                                       │
+   GPIO17 (TX)    │  Master UART2 ───┐                    │
+   ─────────────▶ │                  │ wire on board      │
+                  │                  ▼                    │
+   GPIO5  (RX)    │  Slave UART1   ◀─┘                    │
+   ◀───────────── │                                       │
+                  │  Slave TX ──┐                          │
+   GPIO18 (TX)    │             │                          │
+   ─────────────▶ │             ▼                          │
+                  │  Master RX ◀─┘                          │
+   GPIO16 (RX)    │                                       │
+   ◀───────────── │                                       │
+                  └──────────────────────────────────────┘
 ```
+
+Slave kodu sadece `WOKWI_BUILD` build flag'i ile derlenir
+([`firmware/src/wokwi_slave.cpp`](firmware/src/wokwi_slave.cpp)); gerçek
+donanım modu (`-e esp32dev`) bu kodu derlemez. Wokwi Community License
+tek firmware binary'sini gerektirdiği için bu yaklaşım kullanılır.
 
 ### Kurulum
 
 1. VS Code'a [Wokwi Simulator eklentisi](https://marketplace.visualstudio.com/items?itemName=wokwi.wokwi-vscode) kurun
 2. Eklenti talep ettiğinde wokwi.com'da ücretsiz lisans alın (tek tıklama)
-3. **Her iki firmware'i de derleyin:**
+3. Firmware'i Wokwi hedefi için derleyin:
    ```bash
-   # Gateway (master)
-   cd firmware && pio run -e wokwi
-
-   # Modbus slave (PZEM-like)
-   cd ../slave-firmware && pio run
+   cd firmware
+   pio run -e wokwi
    ```
 4. VS Code'da `firmware/` klasörünü açın, `Ctrl+Shift+P` → **"Wokwi: Start Simulator"**
-
-Wokwi diyagramı `slave-firmware/.pio/build/wokwi-slave/firmware.bin`'i otomatik
-olarak ikinci ESP32'ye yükler. Her iki cihaz da gerçek Modbus RTU üzerinden
-konuşur, gateway okumayı `test.mosquitto.org` MQTT broker'ına yayınlar.
 
 ### Beklenen Çıktı
 
 | OLED satırı | Anlamı |
 |---|---|
-| `WiFi: OK  MQTT: OK` | Wokwi-GUEST'e ve public broker'a bağlandı |
+| `WiFi: OK  MQTT: OK` | Wokwi-GUEST'e ve `test.mosquitto.org` broker'a bağlandı |
 | `IP: 10.13.37.x` | Wokwi'nin tahsis ettiği DHCP IP'si |
-| `OK: 60+` (artan) | Slave'den başarılı Modbus okumaları |
-| `ERR: 0` | Slave bağlıyken hata olmaz |
+| `OK: 5+` (artan) | UART loopback üzerinden Modbus okumaları başarılı |
+| `ERR: 0` | Slave hep mevcut olduğu için hata olmaz |
 
 Public broker'dan okumaları doğrulamak için:
 ```bash
@@ -145,12 +152,10 @@ Modbus register'larının okunacağını yapılandırırsınız.
 modbus-mqtt-gateway/
 ├── firmware/                    PlatformIO ESP32 firmware (master — gateway)
 │   ├── src/                     Modüler kaynaklar (modbus, mqtt, config, web, OTA, OLED)
+│   │   └── wokwi_slave.cpp      WOKWI_BUILD altında sanal Modbus slave (UART1)
 │   ├── data/                    LittleFS — web UI HTML/JS
 │   ├── platformio.ini           [env:esp32dev] ve [env:wokwi] hedefleri
-│   ├── wokwi.toml + diagram.json Wokwi multi-board konfigürasyonu
-├── slave-firmware/              ESP32 Modbus RTU slave (PZEM benzeri sayaç)
-│   ├── platformio.ini           [env:wokwi-slave]
-│   └── src/main.cpp             Input register'lar + sinüzoidal değerler
+│   ├── wokwi.toml + diagram.json Wokwi UART loopback konfigürasyonu
 ├── simulators/                  Donanımsız test için Python simülatörleri
 │   ├── modbus_slave.py          Sahte enerji sayacı (Modbus TCP)
 │   ├── gateway.py               ESP32 firmware'inin Python eşi

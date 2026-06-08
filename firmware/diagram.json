@@ -6,77 +6,59 @@
     {
       "type": "board-esp32-devkit-c-v4",
       "id": "esp",
-      "top": -20,
-      "left": -200,
+      "top": 0,
+      "left": 0,
       "attrs": {}
-    },
-    {
-      "type": "board-esp32-devkit-c-v4",
-      "id": "slave",
-      "top": -20,
-      "left": 250,
-      "attrs": {
-        "firmware": "wokwi-extra/slave.bin",
-        "elf": "wokwi-extra/slave.elf"
-      }
     },
     {
       "type": "wokwi-ssd1306",
       "id": "oled1",
-      "top": -260,
-      "left": -160,
+      "top": -200,
+      "left": 100,
       "attrs": { "i2cAddress": "0x3c" }
     },
     {
       "type": "wokwi-led",
-      "id": "ledRx",
-      "top": 60,
-      "left": 60,
-      "attrs": { "color": "green", "label": "RX" }
-    },
-    {
-      "type": "wokwi-led",
       "id": "ledTx",
-      "top": 60,
-      "left": 110,
+      "top": 180,
+      "left": -100,
       "attrs": { "color": "yellow", "label": "TX" }
     },
     {
-      "type": "wokwi-text",
-      "id": "lblMaster",
-      "top": -340,
-      "left": -200,
-      "attrs": { "text": "Gateway (Modbus master + MQTT)", "fontSize": "16" }
+      "type": "wokwi-led",
+      "id": "ledRx",
+      "top": 180,
+      "left": -40,
+      "attrs": { "color": "green", "label": "RX" }
     },
     {
       "type": "wokwi-text",
-      "id": "lblSlave",
-      "top": -340,
-      "left": 250,
-      "attrs": { "text": "Slave (PZEM-like energy meter)", "fontSize": "16" }
+      "id": "lblTitle",
+      "top": -260,
+      "left": -100,
+      "attrs": { "text": "Gateway ESP32  +  virtual Modbus slave (UART loopback)", "fontSize": "16" }
     },
     {
       "type": "wokwi-text",
-      "id": "lblBus",
-      "top": 100,
-      "left": 0,
-      "attrs": { "text": "RS485 (MAX485 transparent in simulation)", "fontSize": "11" }
+      "id": "lblWire",
+      "top": 240,
+      "left": -100,
+      "attrs": { "text": "UART2 (GPIO16/17)  <-->  UART1 (GPIO5/18)  on same chip", "fontSize": "11" }
     }
   ],
   "connections": [
-    [ "esp:21", "oled1:SDA", "green",  [ "v-20", "h-20" ] ],
-    [ "esp:22", "oled1:SCL", "yellow", [ "v-30", "h-20" ] ],
-    [ "esp:3V3", "oled1:VCC", "red",   [ "v-40", "h-20" ] ],
-    [ "esp:GND.1", "oled1:GND", "black", [ "v-50", "h-20" ] ],
+    [ "esp:21", "oled1:SDA", "green",  [ "v-30", "h-20" ] ],
+    [ "esp:22", "oled1:SCL", "yellow", [ "v-40", "h-20" ] ],
+    [ "esp:3V3", "oled1:VCC", "red",   [ "v-50", "h-20" ] ],
+    [ "esp:GND.1", "oled1:GND", "black", [ "v-60", "h-20" ] ],
 
-    [ "esp:17", "slave:16",  "#0099ff", [ "v40", "h220", "v0" ] ],
-    [ "esp:16", "slave:17",  "#aa55ff", [ "v60", "h220", "v0" ] ],
-    [ "esp:GND.2", "slave:GND.1", "black", [ "v80", "h220" ] ],
+    [ "esp:17", "esp:5",  "#0099ff", [ "v100", "h-260", "v0" ] ],
+    [ "esp:16", "esp:18", "#aa55ff", [ "v120", "h-260", "v0" ] ],
 
     [ "esp:17", "ledTx:A",   "yellow", [ "v0" ] ],
-    [ "ledTx:C", "esp:GND.3", "black", [ "v0" ] ],
-    [ "slave:17", "ledRx:A", "green",  [ "v0" ] ],
-    [ "ledRx:C", "slave:GND.2", "black", [ "v0" ] ]
+    [ "ledTx:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "esp:18", "ledRx:A",   "green",  [ "v0" ] ],
+    [ "ledRx:C", "esp:GND.3", "black", [ "v0" ] ]
   ],
   "dependencies": {}
 }

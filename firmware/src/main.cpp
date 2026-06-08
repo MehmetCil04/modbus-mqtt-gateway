@@ -8,6 +8,7 @@
 #include "mqtt_publisher.h"
 #include "ota_updater.h"
 #include "web_server.h"
+#include "wokwi_slave.h"
 
 static constexpr uint32_t WDT_TIMEOUT_S = 30;
 static constexpr uint32_t LOOP_INTERVAL_MS = 100;
@@ -58,6 +59,12 @@ void setup() {
     }
 
     g_modbus.begin(g_config);
+
+#ifdef WOKWI_BUILD
+    // Virtual PZEM-like slave on UART1; cross-wired to UART2 in diagram.json.
+    WokwiSlave::begin();
+#endif
+
     connectWiFi();
 
     if (WiFi.status() == WL_CONNECTED) {
@@ -69,6 +76,10 @@ void setup() {
 
 void loop() {
     esp_task_wdt_reset();
+
+#ifdef WOKWI_BUILD
+    WokwiSlave::task();
+#endif
 
     g_modbus.poll([](const ModbusReading& r) {
         g_mqtt.publishReading(r);
