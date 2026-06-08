@@ -19,3 +19,6 @@ cloud/test-msg.json
 __pycache__/
 *.pyc
 .venv/
+
+# Slave binary copies are produced from slave-firmware on every build
+firmware/wokwi-extra/
