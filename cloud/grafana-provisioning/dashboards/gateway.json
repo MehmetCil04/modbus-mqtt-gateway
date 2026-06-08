@@ -88,7 +88,7 @@
           "query": "from(bucket:\"telemetry\") |> range(start: -2m) |> filter(fn:(r) => r._measurement == \"gateway\" and r.tag == \"voltage\" and r._field == \"value\") |> last()"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "volt" }, "overrides": [] }
+      "fieldConfig": { "defaults": { "unit": "volt", "color": { "mode": "fixed", "fixedColor": "green" } }, "overrides": [] }
     },
     {
       "id": 3,

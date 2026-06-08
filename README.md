@@ -57,18 +57,53 @@ Ardından:
 | **Wokwi** | Yok | VS Code + Wokwi ext. | Gerçek ESP32 firmware'i sanal donanımda. WiFi + OLED'i tarayıcıda görürsünüz. |
 | **Gerçek donanım** | ESP32 + MAX485 + Modbus sensör | USB | Üretim modu. PCB veya breadboard ile gerçek saha kullanımı. |
 
-## Wokwi Simülasyonu (Tarayıcıda Sanal ESP32)
+## Wokwi Simülasyonu (Tarayıcıda Sanal ESP32 — Multi-Board)
+
+Wokwi yapılandırması **iki ESP32**'yi yan yana çalıştırır: master gateway'imiz ve
+ayrı bir slave firmware'i (`slave-firmware/`) ile çalışan sahte PZEM-004T enerji
+sayacı. UART hatları çapraz bağlanır — gerçek RS485 kablolaması simülasyonda
+şeffaf hale gelir (MAX485 IC'leri atlanır çünkü yazılım katmanı değişmez).
+
+```
+┌──────────────────┐    GPIO17 (TX)    ┌──────────────────┐
+│  Gateway ESP32   │ ───────────────▶ │   Slave ESP32    │
+│  - Modbus master │    GPIO16 (RX)    │   - Modbus slave │
+│  - MQTT publish  │ ◀─────────────── │   - PZEM register │
+│  - OLED + WebUI  │       GND         │     map (V/I/P/T) │
+└──────────────────┘ ◀──────────────▶ └──────────────────┘
+```
+
+### Kurulum
 
 1. VS Code'a [Wokwi Simulator eklentisi](https://marketplace.visualstudio.com/items?itemName=wokwi.wokwi-vscode) kurun
 2. Eklenti talep ettiğinde wokwi.com'da ücretsiz lisans alın (tek tıklama)
-3. Firmware'i Wokwi hedefi için derleyin:
+3. **Her iki firmware'i de derleyin:**
    ```bash
-   cd firmware
-   pio run -e wokwi
-   ```
-4. VS Code'da `Ctrl+Shift+P` → **"Wokwi: Start Simulator"**
+   # Gateway (master)
+   cd firmware && pio run -e wokwi
 
-ESP32 boot eder, Wokwi-GUEST WiFi'ye bağlanır, OLED durumu gösterir, `test.mosquitto.org` üzerinden gerçek bir MQTT broker'a bağlanmayı dener. Modbus tarafı donanım gerektirdiği için bu modda yalnızca firmware'in WiFi/MQTT/web/OLED davranışı doğrulanır.
+   # Modbus slave (PZEM-like)
+   cd ../slave-firmware && pio run
+   ```
+4. VS Code'da `firmware/` klasörünü açın, `Ctrl+Shift+P` → **"Wokwi: Start Simulator"**
+
+Wokwi diyagramı `slave-firmware/.pio/build/wokwi-slave/firmware.bin`'i otomatik
+olarak ikinci ESP32'ye yükler. Her iki cihaz da gerçek Modbus RTU üzerinden
+konuşur, gateway okumayı `test.mosquitto.org` MQTT broker'ına yayınlar.
+
+### Beklenen Çıktı
+
+| OLED satırı | Anlamı |
+|---|---|
+| `WiFi: OK  MQTT: OK` | Wokwi-GUEST'e ve public broker'a bağlandı |
+| `IP: 10.13.37.x` | Wokwi'nin tahsis ettiği DHCP IP'si |
+| `OK: 60+` (artan) | Slave'den başarılı Modbus okumaları |
+| `ERR: 0` | Slave bağlıyken hata olmaz |
+
+Public broker'dan okumaları doğrulamak için:
+```bash
+mosquitto_sub -h test.mosquitto.org -t "gateway/gw-01/#" -v
+```
 
 ## Gerçek Donanım Modu
 
@@ -108,11 +143,14 @@ Modbus register'larının okunacağını yapılandırırsınız.
 
 ```
 modbus-mqtt-gateway/
-├── firmware/                    PlatformIO ESP32 firmware (Arduino framework)
+├── firmware/                    PlatformIO ESP32 firmware (master — gateway)
 │   ├── src/                     Modüler kaynaklar (modbus, mqtt, config, web, OTA, OLED)
 │   ├── data/                    LittleFS — web UI HTML/JS
 │   ├── platformio.ini           [env:esp32dev] ve [env:wokwi] hedefleri
-│   ├── wokwi.toml + diagram.json Wokwi simülasyon konfigürasyonu
+│   ├── wokwi.toml + diagram.json Wokwi multi-board konfigürasyonu
+├── slave-firmware/              ESP32 Modbus RTU slave (PZEM benzeri sayaç)
+│   ├── platformio.ini           [env:wokwi-slave]
+│   └── src/main.cpp             Input register'lar + sinüzoidal değerler
 ├── simulators/                  Donanımsız test için Python simülatörleri
 │   ├── modbus_slave.py          Sahte enerji sayacı (Modbus TCP)
 │   ├── gateway.py               ESP32 firmware'inin Python eşi
@@ -121,7 +159,7 @@ modbus-mqtt-gateway/
 │   ├── docker-compose.yml       6 servis: broker + telegraf + InfluxDB + Grafana + simülatörler
 │   ├── mosquitto.conf / telegraf.conf
 │   └── grafana-provisioning/    Datasource + dashboard otomatik provisioning
-└── docs/                        Mimari notları
+└── docs/                        Mimari notları ve ekran görüntüleri
 ```
 
 ## Teknolojiler
