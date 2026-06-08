@@ -24,7 +24,10 @@ struct GatewayConfig {
     uint8_t serialConfig = 0; // SERIAL_8N1 mapped at use site
 
     // MQTT
-    String mqttHost = "192.168.1.10";
+#ifndef MQTT_HOST_DEFAULT
+#define MQTT_HOST_DEFAULT "192.168.1.10"
+#endif
+    String mqttHost = MQTT_HOST_DEFAULT;
     uint16_t mqttPort = 1883;
     String mqttUser;
     String mqttPass;

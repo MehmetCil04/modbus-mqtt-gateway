@@ -1,5 +1,4 @@
 .pio/
-.vscode/
 .idea/
 *.bin
 *.elf
@@ -11,3 +10,12 @@ firmware/.pioenvs/
 firmware/.piolibdeps/
 cloud/data/
 *.log
+
+# Local test artifacts
+cloud/query.flux
+cloud/test-msg.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/

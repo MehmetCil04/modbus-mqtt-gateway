@@ -51,6 +51,37 @@ services:
       - influxdb
     restart: unless-stopped
 
+  # ── Hardware-free simulation ──────────────────────────────────────────
+  # modbus-slave acts as a fake industrial energy meter speaking real
+  # Modbus TCP. gateway-sim is a Python twin of the ESP32 firmware that
+  # reads it and publishes to MQTT — same topic/JSON contract.
+
+  modbus-slave:
+    build: ../simulators
+    container_name: gw-modbus-slave
+    command: ["python", "modbus_slave.py"]
+    environment:
+      SLAVE_PORT: "5020"
+      SLAVE_ID: "1"
+    restart: unless-stopped
+
+  gateway-sim:
+    build: ../simulators
+    container_name: gw-sim
+    command: ["python", "gateway.py"]
+    environment:
+      MODBUS_HOST: modbus-slave
+      MODBUS_PORT: "5020"
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      DEVICE_ID: gw-sim
+      TOPIC_PREFIX: gateway
+      SLAVE_ID: "1"
+    depends_on:
+      - modbus-slave
+      - mosquitto
+    restart: unless-stopped
+
 volumes:
   mosquitto_data:
   mosquitto_log:

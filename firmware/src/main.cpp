@@ -23,7 +23,15 @@ static uint32_t s_lastStatusUpdate = 0;
 static void connectWiFi() {
     g_display.showMessage("WiFi", "baglantisi...");
     WiFi.mode(WIFI_STA);
+
+#ifdef WOKWI_BUILD
+    // Wokwi simulator: hardcoded open SSID, no captive portal.
+    WiFi.begin("Wokwi-GUEST", "");
+#else
+    // Real device: WiFiManager persisted credentials, captive portal fallback elsewhere.
     WiFi.begin();
+#endif
+
     uint32_t start = millis();
     while (WiFi.status() != WL_CONNECTED && millis() - start < 20000) {
         delay(250);

@@ -1,0 +1,13 @@
+# Wokwi simulator configuration for browser-based ESP32 simulation.
+# Requires:
+#   1. VS Code extension "Wokwi Simulator" (id: wokwi.wokwi-vscode)
+#   2. One-time free license from https://wokwi.com (sign in, click "Get Started")
+#
+# Build the matching binary first:
+#   pio run -e wokwi
+# Then in VS Code: Ctrl+Shift+P -> "Wokwi: Start Simulator"
+
+[wokwi]
+version = 1
+firmware = ".pio/build/wokwi/firmware.bin"
+elf = ".pio/build/wokwi/firmware.elf"
