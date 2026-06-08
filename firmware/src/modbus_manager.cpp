@@ -2,6 +2,8 @@
 
 #include <ModbusRTU.h>
 
+#include "wokwi_slave.h"
+
 namespace {
 ModbusRTU s_mb;
 HardwareSerial s_serial(2);
@@ -49,6 +51,13 @@ bool ModbusManager::readTag(const ModbusTag& tag, float& outValue) {
     uint32_t start = millis();
     while (s_mb.slave() && millis() - start < 1000) {
         s_mb.task();
+#ifdef WOKWI_BUILD
+        // In Wokwi simulation the virtual slave runs on the same chip.
+        // Pump it during this busy-wait so it can actually answer the
+        // request we just sent — otherwise we'd time out before the
+        // slave's task() got any CPU time.
+        WokwiSlave::task();
+#endif
         delay(1);
     }
     if (!s_txDone) return false;
