@@ -1,0 +1,13 @@
+.pio/
+.vscode/
+.idea/
+*.bin
+*.elf
+*.map
+.DS_Store
+Thumbs.db
+firmware/.pio/
+firmware/.pioenvs/
+firmware/.piolibdeps/
+cloud/data/
+*.log

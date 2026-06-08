@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: gateway
+    folder: Gateway
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

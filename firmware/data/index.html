@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modbus-MQTT Gateway</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; max-width: 960px; margin: 0 auto;
+         padding: 1rem; background: #111; color: #eee; }
+  h1 { font-size: 1.3rem; margin: .2rem 0 1rem; }
+  fieldset { border: 1px solid #333; border-radius: 8px; margin-bottom: 1rem; padding: 1rem; }
+  legend { padding: 0 .5rem; color: #aaa; }
+  label { display: block; font-size: .85rem; color: #aaa; margin-top: .5rem; }
+  input, select { width: 100%; padding: .4rem .6rem; background: #1a1a1a; color: #eee;
+                  border: 1px solid #333; border-radius: 4px; font-size: .9rem; box-sizing: border-box; }
+  button { background: #2563eb; color: white; border: 0; padding: .6rem 1rem;
+           border-radius: 6px; cursor: pointer; font-size: .9rem; margin-right: .5rem; }
+  button.danger { background: #b91c1c; }
+  button.secondary { background: #374151; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th, td { padding: .35rem; border-bottom: 1px solid #222; text-align: left; }
+  th { color: #888; font-weight: 500; }
+  td input, td select { font-size: .8rem; padding: .25rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .status { display: flex; gap: 1rem; font-size: .9rem; color: #aaa; margin-bottom: 1rem; }
+  .status b { color: #4ade80; }
+  small { color: #777; }
+</style>
+</head>
+<body>
+<h1>Modbus → MQTT Gateway</h1>
+
+<div class="status" id="status">yükleniyor...</div>
+
+<form id="form">
+  <fieldset>
+    <legend>Cihaz / MQTT</legend>
+    <div class="row">
+      <div>
+        <label>Cihaz ID</label>
+        <input name="deviceId" required>
+      </div>
+      <div>
+        <label>Topic Öneki</label>
+        <input name="topicPrefix" required>
+      </div>
+      <div>
+        <label>MQTT Sunucu</label>
+        <input name="mqttHost" required>
+      </div>
+      <div>
+        <label>Port</label>
+        <input name="mqttPort" type="number" required>
+      </div>
+      <div>
+        <label>MQTT Kullanıcı</label>
+        <input name="mqttUser">
+      </div>
+      <div>
+        <label>MQTT Parola</label>
+        <input name="mqttPass" type="password">
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Modbus Serisi</legend>
+    <div class="row">
+      <div>
+        <label>Baud</label>
+        <input name="baud" type="number" required>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Etiketler (Register'lar)</legend>
+    <table id="tagsTable">
+      <thead><tr>
+        <th>Slave</th><th>FC</th><th>Adres</th><th>Len</th><th>Tip</th>
+        <th>Ölçek</th><th>Tag</th><th>Birim</th><th>Poll(ms)</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <button type="button" class="secondary" onclick="addTag()">+ Yeni Tag</button>
+    <small>FC: 3 = Holding, 4 = Input. Tip: uint16/int16/uint32/float32.</small>
+  </fieldset>
+
+  <button type="submit">Kaydet & Yeniden Başlat</button>
+  <button type="button" class="secondary" onclick="loadConfig()">Yenile</button>
+</form>
+
+<fieldset>
+  <legend>Firmware Güncelleme (OTA)</legend>
+  <form id="otaForm" enctype="multipart/form-data">
+    <input type="file" name="firmware" accept=".bin" required>
+    <button type="submit" class="danger">Yükle</button>
+  </form>
+</fieldset>
+
+<script>
+const $ = (q) => document.querySelector(q);
+const tbody = $('#tagsTable tbody');
+
+function addTag(t = {}) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input name="slaveId" type="number" value="${t.slaveId ?? 1}" min="1" max="247"></td>
+    <td><select name="fc"><option value="3" ${t.fc===3?'selected':''}>3</option><option value="4" ${(t.fc??4)===4?'selected':''}>4</option></select></td>
+    <td><input name="addr" type="number" value="${t.addr ?? 0}"></td>
+    <td><input name="len" type="number" value="${t.len ?? 1}" min="1" max="4"></td>
+    <td><select name="type">
+      ${['uint16','int16','uint32','float32'].map(x => `<option ${x===(t.type??'uint16')?'selected':''}>${x}</option>`).join('')}
+    </select></td>
+    <td><input name="scale" type="number" step="any" value="${t.scale ?? 1}"></td>
+    <td><input name="tag" value="${t.tag ?? ''}" required></td>
+    <td><input name="unit" value="${t.unit ?? ''}"></td>
+    <td><input name="pollMs" type="number" value="${t.pollMs ?? 2000}"></td>
+    <td><button type="button" class="danger" onclick="this.closest('tr').remove()">×</button></td>`;
+  tbody.appendChild(tr);
+}
+
+async function loadConfig() {
+  const r = await fetch('/api/config');
+  const cfg = await r.json();
+  for (const k of ['deviceId','topicPrefix','mqttHost','mqttPort','mqttUser','baud']) {
+    if (cfg[k] !== undefined) $(`[name=${k}]`).value = cfg[k];
+  }
+  tbody.innerHTML = '';
+  (cfg.tags || []).forEach(addTag);
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const s = await r.json();
+    $('#status').innerHTML = `FW: <b>${s.fw}</b> · Uptime: <b>${Math.floor(s.uptimeMs/1000)}s</b> · OK: <b>${s.okCount}</b> · ERR: <b>${s.errCount}</b>`;
+  } catch (e) { $('#status').textContent = 'durum alınamadı'; }
+}
+
+$('#form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {
+    deviceId: fd.get('deviceId'),
+    topicPrefix: fd.get('topicPrefix'),
+    mqttHost: fd.get('mqttHost'),
+    mqttPort: parseInt(fd.get('mqttPort')),
+    mqttUser: fd.get('mqttUser'),
+    mqttPass: fd.get('mqttPass'),
+    baud: parseInt(fd.get('baud')),
+    tags: [...tbody.querySelectorAll('tr')].map(tr => ({
+      slaveId: parseInt(tr.querySelector('[name=slaveId]').value),
+      fc: parseInt(tr.querySelector('[name=fc]').value),
+      addr: parseInt(tr.querySelector('[name=addr]').value),
+      len: parseInt(tr.querySelector('[name=len]').value),
+      type: tr.querySelector('[name=type]').value,
+      scale: parseFloat(tr.querySelector('[name=scale]').value),
+      tag: tr.querySelector('[name=tag]').value,
+      unit: tr.querySelector('[name=unit]').value,
+      pollMs: parseInt(tr.querySelector('[name=pollMs]').value),
+    })),
+  };
+  const r = await fetch('/api/config', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  alert(r.ok ? 'Kaydedildi. Cihaz yeniden başlatılabilir.' : 'Hata!');
+});
+
+$('#otaForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!confirm('Firmware yüklensin mi?')) return;
+  const r = await fetch('/api/ota', { method: 'POST', body: new FormData(e.target) });
+  alert(r.ok ? 'Yüklendi, yeniden başlatılıyor.' : 'OTA başarısız');
+});
+
+loadConfig();
+loadStatus();
+setInterval(loadStatus, 3000);
+</script>
+</body>
+</html>
