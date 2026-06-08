@@ -8,10 +8,23 @@ tarayıcıdan yapılır, firmware OTA ile güncellenir.
 *Canlı dashboard: gerilim, akım, güç ve sıcaklık zaman serileri + anlık ölçüm kartları.*
 
 ```
-[Modbus Slave] --RS485--> [ESP32 Gateway] --WiFi/MQTT--> [Mosquitto] --> [Telegraf] --> [InfluxDB] --> [Grafana]
-                              |       \
-                          OLED durum   Web UI (config + OTA)
+                                                              ┌─────────────┐
+   Pipeline A (Docker):                                        │             │
+   ┌──────────────┐  Modbus  ┌──────────────┐  MQTT          │  Telegraf   │
+   │ Python slave │ ───TCP─▶ │ Python gw    │ ──▶ Mosquitto ─▶│  (2x input) │──▶ InfluxDB ──▶ Grafana
+   │ (PyModbus)   │ ◀──────  │ (paho-mqtt)  │   tcp://...:1883 │             │              http://localhost:3000
+   └──────────────┘          └──────────────┘                 │             │
+                                                              │             │
+   Pipeline B (Wokwi tarayıcıda):                              │             │
+   ┌──────────────┐  Modbus  ┌──────────────┐  MQTT          │             │
+   │ WokwiSlave   │ ───RTU─▶ │ Gateway      │ ──▶ test.mosquitto.org:1883  ─▶
+   │ (UART1)      │ ◀──────  │ (UART2+WiFi) │                 │             │
+   └──────────────┘          └──────────────┘                 └─────────────┘
+        ↑ aynı sanal ESP32 üzerinde, UART'lar dışarıdan cross-wire
 ```
+
+İki bağımsız simülasyon hattı **aynı Grafana dashboard'unda** birleşir.
+Telegraf hem yerel broker'ı hem de public `test.mosquitto.org`'u dinler.
 
 Donanım hâlâ yolda mı? Sorun değil — proje **iki farklı donanımsız test modu** ile birlikte gelir.
 
