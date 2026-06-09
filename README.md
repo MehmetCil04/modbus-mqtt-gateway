@@ -75,7 +75,13 @@ Ardından:
 Wokwi yapılandırması **tek ESP32** üzerinde hem gateway master'ı hem de sanal bir
 PZEM-like Modbus slave'i çalıştırır. Slave UART1'de (GPIO5/18), master UART2'de
 (GPIO16/17). İki UART, kart üzerinde çapraz olarak kabloyla birbirine bağlanır;
-gerçek Modbus RTU protokolü iki UART arasında konuşur:
+gerçek Modbus RTU protokolü iki UART arasında konuşur.
+
+> 🧪 **Yol haritası — wokwi-pzem-004t custom chip:** [`chips/wokwi-pzem-004t/`](chips/wokwi-pzem-004t/)
+> klasöründe C ile yazılmış kendi PZEM-004T Wokwi parçamızın kaynak kodu hazır —
+> Modbus RTU state machine, CRC-16, sinüzoidal sampler. clang/WASI SDK ile WebAssembly'ye
+> derlenip diyagrama eklenecek (kendi `wokwi-pzem-004t` parçamızı yayınlamak hedef).
+> Detaylar: [`chips/wokwi-pzem-004t/README.md`](chips/wokwi-pzem-004t/README.md).
 
 ```
                   ┌──────────────────────────────────────┐
@@ -165,10 +171,17 @@ Modbus register'larının okunacağını yapılandırırsınız.
 modbus-mqtt-gateway/
 ├── firmware/                    PlatformIO ESP32 firmware (master — gateway)
 │   ├── src/                     Modüler kaynaklar (modbus, mqtt, config, web, OTA, OLED)
-│   │   └── wokwi_slave.cpp      WOKWI_BUILD altında sanal Modbus slave (UART1)
+│   │   └── wokwi_slave.cpp      WOKWI_BUILD altında loopback fallback slave (UART1)
 │   ├── data/                    LittleFS — web UI HTML/JS
 │   ├── platformio.ini           [env:esp32dev] ve [env:wokwi] hedefleri
-│   ├── wokwi.toml + diagram.json Wokwi UART loopback konfigürasyonu
+│   ├── wokwi.toml + diagram.json Wokwi konfigürasyonu (custom chip referansı)
+├── chips/                       Custom Wokwi chips (C → WebAssembly)
+│   └── wokwi-pzem-004t/         PZEM-004T benzeri Modbus RTU enerji sayacı (WIP)
+│       ├── src/main.c           Modbus RTU slave state machine + CRC-16 + sampler
+│       ├── src/wokwi-api.h      Wokwi Custom Chip API subset
+│       ├── chip.json            Pin tanımları + chip metadata
+│       ├── Makefile             clang --target=wasm32 ile build
+│       └── README.md            Chip kullanım kılavuzu
 ├── simulators/                  Donanımsız test için Python simülatörleri
 │   ├── modbus_slave.py          Sahte enerji sayacı (Modbus TCP)
 │   ├── gateway.py               ESP32 firmware'inin Python eşi
@@ -194,6 +207,8 @@ modbus-mqtt-gateway/
 - [x] InfluxDB + Grafana ile zaman serisi görselleştirme
 - [x] Python tabanlı tam stack simülatör (donanımsız test)
 - [x] Wokwi entegrasyonu (tarayıcıda sanal ESP32)
+- [x] Custom Wokwi chip kaynak kodu: `chips/wokwi-pzem-004t/` (Modbus RTU + CRC-16, C)
+- [ ] Chip'i WebAssembly'ye derleme + Wokwi diyagramına entegrasyon (clang gerekir)
 - [ ] TLS destekli MQTT (HiveMQ Cloud)
 - [ ] Çevrimdışı veri buffer'ı (LittleFS ring buffer)
 - [ ] Modbus TCP master desteği

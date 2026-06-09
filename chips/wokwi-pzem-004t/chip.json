@@ -1,0 +1,30 @@
+{
+  "name": "wokwi-pzem-004t",
+  "author": "Mehmet Çil",
+  "version": "0.1.0",
+  "description": "PZEM-004T-inspired Modbus RTU energy meter for Wokwi. Speaks function codes 03 (holding registers) and 04 (input registers) on UART at 9600 8N1, slave id 1. Returns voltage / current / power / temperature with sinusoidal variation and noise.",
+  "pins": [
+    "GND",
+    "VCC",
+    "RX",
+    "TX"
+  ],
+  "controls": [
+    {
+      "id": "slave_id",
+      "type": "number",
+      "label": "Slave ID",
+      "min": 1,
+      "max": 247,
+      "default": 1
+    },
+    {
+      "id": "baud",
+      "type": "number",
+      "label": "Baud rate",
+      "min": 1200,
+      "max": 115200,
+      "default": 9600
+    }
+  ]
+}
