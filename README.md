@@ -77,13 +77,25 @@ PZEM-like Modbus slave'i çalıştırır. Slave UART1'de (GPIO5/18), master UART
 (GPIO16/17). İki UART, kart üzerinde çapraz olarak kabloyla birbirine bağlanır;
 gerçek Modbus RTU protokolü iki UART arasında konuşur.
 
-> 🧪 **wokwi-pzem-004t custom chip:** [`chips/wokwi-pzem-004t/`](chips/wokwi-pzem-004t/)
-> klasöründe C ile yazılmış kendi PZEM-004T Wokwi parçamızın **derlenmiş `chip.wasm`**
-> ve kaynak kodu hazır — Modbus RTU state machine, CRC-16, sinüzoidal sampler. WASI
-> SDK clang ile WebAssembly'ye derlendi (~3.6 KB). Wokwi VS Code 3.6.0 extension'ın
-> chip config loader'ında bir bug nedeniyle lokal VS Code Wokwi'de henüz integrate
-> olmuyor; **wokwi.com web IDE'de test edilebilir**. Default Wokwi simülasyonu UART
-> loopback yaklaşımıyla çalışır, custom chip alternatif (gelişmiş) hedeftir.
+> 🚀 **Canlı demo (custom chip):**
+> [**wokwi.com/projects/466438960165234689**](https://wokwi.com/projects/466438960165234689)
+> — kendi yazdığım `wokwi-pzem-004t` C chip'i (WebAssembly), gerçek ESP32 master,
+> canlı OLED. Tarayıcıdan tek tık ile çalıştırılabilir.
+
+<p align="center">
+  <img src="docs/wokwi-online-chip.png" alt="wokwi.com custom chip live" width="600">
+  <br>
+  <em>Kendi yazdığım <code>wokwi-pzem-004t</code> custom chip'i wokwi.com'da canlı.
+  ESP32 master Modbus RTU üzerinden chip'i sorguluyor; chip yanıtlıyor; OLED gerçek
+  zamanlı V/I/P/T gösteriyor. OK: 33, ERR: 0 — Modbus + CRC-16 doğrulamaları sıfır
+  hata. Chip kaynağı C ile yazılı, WASI SDK clang ile WebAssembly'ye derlendi
+  (~3.6 KB binary).</em>
+</p>
+
+Lokal VS Code Wokwi (3.6.0) custom chip config loader'ında bir bug nedeniyle aynı
+chip'i lokal extension'da yükleyemiyor; o yüzden default VS Code Wokwi simülasyonu
+UART loopback yaklaşımıyla çalışır (aşağıda). Custom chip'in işlevsel kanıtı
+yukarıdaki canlı wokwi.com demosudur.
 
 ```
                   ┌──────────────────────────────────────┐
@@ -210,7 +222,8 @@ modbus-mqtt-gateway/
 - [x] Python tabanlı tam stack simülatör (donanımsız test)
 - [x] Wokwi entegrasyonu (tarayıcıda sanal ESP32)
 - [x] Custom Wokwi chip kaynak kodu: `chips/wokwi-pzem-004t/` (Modbus RTU + CRC-16, C)
-- [ ] Chip'i WebAssembly'ye derleme + Wokwi diyagramına entegrasyon (clang gerekir)
+- [x] Chip'i WebAssembly'ye derleme (WASI SDK clang ile, ~3.6 KB binary)
+- [x] Chip'i Wokwi'de canlı entegrasyon ([wokwi.com/projects/466438960165234689](https://wokwi.com/projects/466438960165234689))
 - [ ] TLS destekli MQTT (HiveMQ Cloud)
 - [ ] Çevrimdışı veri buffer'ı (LittleFS ring buffer)
 - [ ] Modbus TCP master desteği
