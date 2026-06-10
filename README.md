@@ -77,11 +77,13 @@ PZEM-like Modbus slave'i çalıştırır. Slave UART1'de (GPIO5/18), master UART
 (GPIO16/17). İki UART, kart üzerinde çapraz olarak kabloyla birbirine bağlanır;
 gerçek Modbus RTU protokolü iki UART arasında konuşur.
 
-> 🧪 **Yol haritası — wokwi-pzem-004t custom chip:** [`chips/wokwi-pzem-004t/`](chips/wokwi-pzem-004t/)
-> klasöründe C ile yazılmış kendi PZEM-004T Wokwi parçamızın kaynak kodu hazır —
-> Modbus RTU state machine, CRC-16, sinüzoidal sampler. clang/WASI SDK ile WebAssembly'ye
-> derlenip diyagrama eklenecek (kendi `wokwi-pzem-004t` parçamızı yayınlamak hedef).
-> Detaylar: [`chips/wokwi-pzem-004t/README.md`](chips/wokwi-pzem-004t/README.md).
+> 🧪 **wokwi-pzem-004t custom chip:** [`chips/wokwi-pzem-004t/`](chips/wokwi-pzem-004t/)
+> klasöründe C ile yazılmış kendi PZEM-004T Wokwi parçamızın **derlenmiş `chip.wasm`**
+> ve kaynak kodu hazır — Modbus RTU state machine, CRC-16, sinüzoidal sampler. WASI
+> SDK clang ile WebAssembly'ye derlendi (~3.6 KB). Wokwi VS Code 3.6.0 extension'ın
+> chip config loader'ında bir bug nedeniyle lokal VS Code Wokwi'de henüz integrate
+> olmuyor; **wokwi.com web IDE'de test edilebilir**. Default Wokwi simülasyonu UART
+> loopback yaklaşımıyla çalışır, custom chip alternatif (gelişmiş) hedeftir.
 
 ```
                   ┌──────────────────────────────────────┐

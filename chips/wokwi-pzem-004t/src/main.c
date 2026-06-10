@@ -195,6 +195,7 @@ static void on_boot_tick(void *user_data) {
 // diagram, and we avoid needing a libc / malloc by skipping calloc.
 static pzem_t g_pzem;
 
+__attribute__((export_name("chip_init")))
 void chip_init(void) {
     pzem_t *pzem = &g_pzem;
     pzem->slave_id = DEFAULT_SLAVE_ID;

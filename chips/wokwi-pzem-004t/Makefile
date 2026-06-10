@@ -26,7 +26,7 @@ SOURCES = src/main.c
 
 CFLAGS  = -Wall -Wno-unused-parameter \
           -mcpu=mvp -nostdlib \
-          -Wl,--no-entry,--export-table,--initial-memory=65536,--max-memory=65536,--stack-first,-zstack-size=8192
+          -Wl,--allow-undefined,--no-entry,--export-table,--initial-memory=65536,--max-memory=65536,--stack-first,-zstack-size=8192
 
 $(TARGET): $(SOURCES)
 	$(CLANG) --target=wasm32 $(CFLAGS) -o $(TARGET) $(SOURCES)

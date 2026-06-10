@@ -24,6 +24,13 @@ typedef uint32_t uart_dev_t;
 #define LOW  0
 #define HIGH 1
 
+// Freestanding (-nostdlib) compilation: stdbool.h not available.
+#ifndef __cplusplus
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+
 typedef struct {
     void (*callback)(void *user_data);
     void *user_data;
