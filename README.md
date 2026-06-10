@@ -78,7 +78,7 @@ PZEM-like Modbus slave'i çalıştırır. Slave UART1'de (GPIO5/18), master UART
 gerçek Modbus RTU protokolü iki UART arasında konuşur.
 
 > 🚀 **Canlı demo (custom chip):**
-> [**wokwi.com/projects/466438960165234689**](https://wokwi.com/projects/466438960165234689)
+> [**wokwi.com/projects/466439603334596609**](https://wokwi.com/projects/466439603334596609)
 > — kendi yazdığım `wokwi-pzem-004t` C chip'i (WebAssembly), gerçek ESP32 master,
 > canlı OLED. Tarayıcıdan tek tık ile çalıştırılabilir.
 
@@ -223,7 +223,7 @@ modbus-mqtt-gateway/
 - [x] Wokwi entegrasyonu (tarayıcıda sanal ESP32)
 - [x] Custom Wokwi chip kaynak kodu: `chips/wokwi-pzem-004t/` (Modbus RTU + CRC-16, C)
 - [x] Chip'i WebAssembly'ye derleme (WASI SDK clang ile, ~3.6 KB binary)
-- [x] Chip'i Wokwi'de canlı entegrasyon ([wokwi.com/projects/466438960165234689](https://wokwi.com/projects/466438960165234689))
+- [x] Chip'i Wokwi'de canlı entegrasyon ([wokwi.com/projects/466439603334596609](https://wokwi.com/projects/466439603334596609))
 - [ ] TLS destekli MQTT (HiveMQ Cloud)
 - [ ] Çevrimdışı veri buffer'ı (LittleFS ring buffer)
 - [ ] Modbus TCP master desteği
